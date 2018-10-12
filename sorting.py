@@ -3,14 +3,15 @@ import random, time
 
 uh.rotation(270)
 uh.brightness(0.5)
+disp_x, disp_y = uh.get_shape()
 
 # 17 X 16 = [-1] is sum
 
 def build_array():
     disp = []
-    for _ in range(16):
-        row_sum = random.randint(1,16)
-        row = [1 if ind < row_sum else 0 for ind in range(16)]
+    for _ in range(disp_x):
+        row_sum = random.randint(1, disp_y)
+        row = [1 if ind < row_sum else 0 for ind in range(disp_y)]
         row.append(row_sum)
         row.append(random.randint(1, 255))
         row.append(random.randint(1, 255))
@@ -28,8 +29,8 @@ def show_array(arr):
 #end show_array
 
 def bubble_sort(arr):
-    for i in range(16):
-        for j in range(15-i):
+    for i in range(len(arr)):
+        for j in range(len(arr) - 1 - i):
             if arr[j][-4] > arr[j+1][-4]:
                 arr[j], arr[j+1] = arr[j+1], arr[j]
                 show_array(arr)
@@ -37,7 +38,7 @@ def bubble_sort(arr):
 #end bubble_sort
 
 def insertion_sort(arr):
-    for i in range(1, 16):
+    for i in range(1, len(arr)):
         current = arr[i]
         pos = i
         while pos > 0 and arr[pos-1][-4] > current[-4]:
