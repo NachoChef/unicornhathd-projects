@@ -20,6 +20,7 @@ slow_value = 0.1
 
 
 def pause():
+    """Sleeps `slow_value` seconds if `slow_mode` is True"""
     time.sleep(slow_value) if slow_mode else None
 
 
@@ -36,7 +37,7 @@ def build_array():
 
 
 def update_screen(arr):
-    """Will loop through and update screen buffer for all pixels.
+    """Calls library methods to update screen buffer for all pixels and display changes.
 
     :param arr: new buffer array
     :return: None
@@ -47,15 +48,24 @@ def update_screen(arr):
 
 
 def row_swap(x_1, row_1, x_2, row_2):
+    """Will change buffer rows s.t. buf[x_1] = row_2 and vice versa, then display.
+
+    :param x_1: First index
+    :param row_1: First row
+    :param x_2: Second index
+    :param row_2: Second row
+    :return: None
+    """
     uh.set_row(x_1, row_2[:-1])
     uh.set_row(x_2, row_1[:-1])
     uh.show()
+# end row_swap
 
 
 def update_row(pos, row):
     """Will update row for a given position and display it.
 
-    :param i: index of row to update
+    :param pos: index of row to update
     :param row: new row to write to buffer
     :return: None
     """
@@ -63,7 +73,8 @@ def update_row(pos, row):
     uh.show()
 
 
-def display():
+def blank_display():
+    """Sets all pixels to gray and displays."""
     uh.set_all(100, 100, 100)
     uh.show()
 # end display
@@ -76,22 +87,23 @@ def bubble_sort(arr):
     :return: Sorted array
     """
     for i in range(len(arr)):
-        swaps = 0
+        swapped = False
         for j in range(len(arr) - 1 - i):
             if arr[j][SUM_IND] > arr[j+1][SUM_IND]:
-                swaps = swaps + 1
-                arr[j], arr[j+1] = arr[j+1], arr[j]
+                swapped = True
                 row_swap(j, arr[j], j+1, arr[j+1])
+                arr[j], arr[j+1] = arr[j+1], arr[j]
                 # "bubble the hole"
                 k = j
                 while k > 0:
                     if arr[k][SUM_IND] < arr[k-1][SUM_IND]:
+                        row_swap(k, arr[k], k-1, arr[k-1])
                         arr[k][SUM_IND], arr[k-1][SUM_IND] = arr[k-1][SUM_IND], arr[k][SUM_IND]
-                        row_swap(k, arr[k], k+1, arr[k+1])
                         k = k - 1
+                        swapped = True
 
                 pause()
-        if swaps is 0:  # no changes == sorted
+        if not swapped:  # no changes == sorted
             break
     return arr
 # end bubble_sort
@@ -101,28 +113,30 @@ def insertion_sort(arr):
     for pos in range(1, len(arr)):
         current = arr[pos]
         while pos > 0 and arr[pos-1][SUM_IND] > current[SUM_IND]:
+            row_swap(pos, current, pos-1, arr[pos-1])
             arr[pos] = arr[pos-1]
             pos = pos - 1
-            uh.set_pixels()
             pause()
           
         arr[pos] = current
-        update_screen(arr)
     update_screen(arr)
     return arr
 # end insertion_sort
 
 
 def quicksort(arr):
-    # array is [16 * (0 or 1), (r, g, b), sum]
-    
+    """Quicksort algorithm for Python. I think the recursiveness is breaking the display portion.
+
+    :param arr: The array to be sorted.
+    :return: None
+    """
     # partitions
     less, equal, greater = [], [], []
-    #show_array(arr)
     
-    # this checks that there is more than 1 col in the list
+    # this checks that there is more than 1 col in the list...
+    # because it's a list of lists, len will always be > 1 UNLESS we move into the inner list, which would be a tuple,
+    # so we make sure to not do that
     if len(arr) > 1 and type(arr[0]) is list:
-        # pivot is a 19 item list with size at SUM_IND
         pivot = arr[len(arr) // 2]
         for col in arr:
             if col[SUM_IND] < pivot[SUM_IND]:
@@ -139,20 +153,20 @@ def quicksort(arr):
 
 
 def main():
+    global slow_mode
+    slow_mode = True
     uh.rotation(180)
-    display(greeting)
+    update_screen(greeting)
     time.sleep(1.0)
     unsorted_array = build_array()
     uh.rotation(270)
     update_screen(unsorted_array)
     time.sleep(1.0)
     arr = bubble_sort(list(unsorted_array))
-    #show_array(arr)
     time.sleep(1.0)
     update_screen(unsorted_array)
     time.sleep(1.0)
     arr = insertion_sort(list(unsorted_array))
-    #show_array(arr)
     time.sleep(1.0)
     update_screen(unsorted_array)
     time.sleep(1.0)
