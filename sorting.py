@@ -14,88 +14,84 @@ DISP_X, DISP_Y = uh.get_shape()
 # the sum of the column stored here:
 SUM_IND = -1
 
-# the random color tuple for the column stored here:
-RGB_IND = -2
-
-# the status of the column stored here:
-MOD_IND = -3
-
 # whether or not to activate slow mode
 slow_mode = True
+slow_value = 0.1
 
 
 def pause():
-    time.sleep(0.1) if slow_mode else None
+    time.sleep(slow_value) if slow_mode else None
 
 
 def build_array():
     """Generates random columns with appropriate data."""
     disp = uh.get_pixels()
     for i in range(len(disp)):
+        r, g, b = random.randint(1, 255), random.randint(1, 255), random.randint(1, 255)
         row_sum = random.randint(1, DISP_Y)
-        disp[i] = [[random.randint(1, 255), random.randint(1, 255), random.randint(1, 255)]
-                   if ind < row_sum else [[0] * 3] for ind in range(DISP_Y)]
+        disp[i] = [(r, g, b) if ind < row_sum else ([0] * 3) for ind in range(DISP_Y)]
         disp[i].append(row_sum)
-
-    # for _ in range(DISP_X):
-    #     row_sum = random.randint(1, DISP_Y)
-    #     row = [1 if ind < row_sum else 0 for ind in range(DISP_Y)]
-    #     row.append(False)
-    #     row.append((random.randint(1, 255), random.randint(1, 255), random.randint(1, 255)))
-    #     row.append(row_sum)
-    #     disp.append(row)
     return disp
 # end build_array
 
 
-def update_buffer(arr, efficient=True):
-    """Will loop through and display array. If `efficient` then only modified rows will be written to the buffer.
+def update_screen(arr):
+    """Will loop through and update screen buffer for all pixels.
 
     :param arr: new buffer array
-    :param efficient:
-    :return:
+    :return: None
     """
-    for x in range(len(arr)):
-        if arr[x][MOD_IND] is True or not efficient: 
-            arr[x][MOD_IND] = False
-            for y in range(len(arr)):
-                state = arr[x][y]
-                rgb = arr[x][RGB_IND]
-                # if position value is 1 then we want to add color info, otherwise clear color info so we don't draw anything
-                uh.set_pixel(x, y, state * rgb[0], state * rgb[1], state * rgb[2])
+    uh.set_pixels(arr[:][:-1])
     uh.show()
 # end show_array
 
 
-def display(arr):
-    for x in range(len(arr)):
-        for y in range(len(arr)):
-            pixel = arr[x][y]
-            uh.set_pixel(x, y, pixel * 100, pixel * 100, pixel * 100)
+def row_swap(x_1, row_1, x_2, row_2):
+    uh.set_row(x_1, row_2[:-1])
+    uh.set_row(x_2, row_1[:-1])
+    uh.show()
+
+
+def update_row(pos, row):
+    """Will update row for a given position and display it.
+
+    :param i: index of row to update
+    :param row: new row to write to buffer
+    :return: None
+    """
+    uh.set_row(pos, row[:-1])
+    uh.show()
+
+
+def display():
+    uh.set_all(100, 100, 100)
     uh.show()
 # end display
 
 
 def bubble_sort(arr):
+    """Given array with sum at SUM_IND, perform bubble sort on entries and return output.
+
+    :param arr: Input array, value to sort on at SUM_IND
+    :return: Sorted array
+    """
     for i in range(len(arr)):
         swaps = 0
         for j in range(len(arr) - 1 - i):
             if arr[j][SUM_IND] > arr[j+1][SUM_IND]:
                 swaps = swaps + 1
                 arr[j], arr[j+1] = arr[j+1], arr[j]
-                arr[j+1][MOD_IND], arr[j][MOD_IND] = True, True
-                
+                row_swap(j, arr[j], j+1, arr[j+1])
                 # "bubble the hole"
                 k = j
                 while k > 0:
                     if arr[k][SUM_IND] < arr[k-1][SUM_IND]:
                         arr[k][SUM_IND], arr[k-1][SUM_IND] = arr[k-1][SUM_IND], arr[k][SUM_IND]
-                        arr[k][MOD_IND], arr[k-1][MOD_IND] = True, True
+                        row_swap(k, arr[k], k+1, arr[k+1])
                         k = k - 1
-                        
-                update_buffer(arr)
+
                 pause()
-        if swaps is 0:
+        if swaps is 0:  # no changes == sorted
             break
     return arr
 # end bubble_sort
@@ -104,17 +100,15 @@ def bubble_sort(arr):
 def insertion_sort(arr):
     for pos in range(1, len(arr)):
         current = arr[pos]
-        current[MOD_IND] = True
         while pos > 0 and arr[pos-1][SUM_IND] > current[SUM_IND]:
             arr[pos] = arr[pos-1]
-            arr[pos][MOD_IND], arr[pos-1][MOD_IND] = True, True
             pos = pos - 1
-            update_buffer(arr)
+            uh.set_pixels()
             pause()
           
         arr[pos] = current
-        update_buffer(arr)
-    update_buffer(arr, False)
+        update_screen(arr)
+    update_screen(arr)
     return arr
 # end insertion_sort
 
@@ -137,7 +131,7 @@ def quicksort(arr):
                 equal.append(col)
             if col[SUM_IND] > pivot[SUM_IND]:
                 greater.append(col)
-            update_buffer(less + equal + greater, False)
+            update_screen(less + equal + greater)
         return quicksort(less) + equal + quicksort(greater) 
     else: 
         return arr
@@ -150,20 +144,20 @@ def main():
     time.sleep(1.0)
     unsorted_array = build_array()
     uh.rotation(270)
-    update_buffer(unsorted_array, False)
+    update_screen(unsorted_array)
     time.sleep(1.0)
     arr = bubble_sort(list(unsorted_array))
-    #show_array(arr, False)
+    #show_array(arr)
     time.sleep(1.0)
-    update_buffer(unsorted_array, False)
+    update_screen(unsorted_array)
     time.sleep(1.0)
     arr = insertion_sort(list(unsorted_array))
-    #show_array(arr, False)
+    #show_array(arr)
     time.sleep(1.0)
-    update_buffer(unsorted_array, False)
+    update_screen(unsorted_array)
     time.sleep(1.0)
     arr = quicksort(list(unsorted_array))
-    update_buffer(arr, False)
+    update_screen(arr)
     time.sleep(1)
     uh.off()
 # end main
