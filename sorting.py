@@ -119,6 +119,7 @@ def insertion_sort(arr):
             pause()
           
         arr[pos] = current
+        update_screen(arr)
     update_screen(arr)
     return arr
 # end insertion_sort
@@ -146,6 +147,7 @@ def quicksort(arr):
             if col[SUM_IND] > pivot[SUM_IND]:
                 greater.append(col)
             update_screen(less + equal + greater)
+            pause()
         return quicksort(less) + equal + quicksort(greater) 
     else: 
         return arr
